@@ -18,6 +18,7 @@ The following interfaces are available :
 
 ## 📰 News
 
+- **2025-11-26** - 🍎 **Fork: Full Apple Silicon (M1/M2/M3/M4/M5) support with MPS acceleration!**
 - **2025-05-17** - Added SANA Sprint(OpenVINO) support,Tiny AutoEncoder 1.3(Mocha Croissant) support
 - **2025-04-20** - Added MCP server support,faster uv based installation,Claude desktop, Open WebUI support
 - **2024-11-03** - Added Intel Core Ultra Series 2 (Lunar Lake) NPU support
@@ -438,37 +439,51 @@ To install FastSD CPU on Windows run the following steps :
 
   `./start-webui.sh`
 
-### FastSD CPU on Mac
+### FastSD CPU on Mac (Apple Silicon M1/M2/M3/M4/M5)
 
 ![FastSD CPU running on Mac](https://raw.githubusercontent.com/rupeshs/fastsdcpu/main/docs/images/fastsdcpu-mac-gui.jpg)
 
-:exclamation:**Ensure that you have Python 3.9 or 3.10 or 3.11 version installed.**
+> ✅ **This fork adds full Apple Silicon support!** Unlike the original repo, OpenVINO-related crashes are fixed and MPS (Metal Performance Shaders) acceleration works out of the box.
 
-Run the following commands to install FastSD CPU on Mac :
+:exclamation:**Requirements: Python 3.9, 3.10, or 3.11**
 
-- Clone/download this repo or download [release](https://github.com/rupeshs/fastsdcpu/releases).
-- In the terminal, enter into fastsdcpu directory
-- Run the following command
+#### Installation
 
-  `chmod +x install-mac.sh`
+```bash
+# Clone this fork
+git clone https://github.com/giocasu/fastsdcpu.git
+cd fastsdcpu
 
-  `./install-mac.sh`
+# Switch to the Apple Silicon branch
+git checkout apple-silicon-support
 
-#### To start Desktop GUI
+# Install dependencies
+chmod +x install-mac.sh
+./install-mac.sh
+```
 
-  `./start.sh`
+#### Running with MPS acceleration (recommended for Apple Silicon)
 
-#### To start Web UI
+For best performance on M1/M2/M3/M4/M5 Macs, use MPS (Metal Performance Shaders):
 
-  `./start-webui.sh`
+```bash
+# Desktop GUI with MPS
+export DEVICE=mps
+./start.sh
 
-Thanks [Autantpourmoi](https://github.com/Autantpourmoi) for Mac testing.
+# Or Web UI with MPS
+export DEVICE=mps
+./start-webui.sh
+```
 
-:exclamation:We don't support OpenVINO on Mac (M1/M2/M3 chips, but *does* work on Intel chips).
+#### Important notes for Apple Silicon
 
-If you want to increase image generation speed on Mac(M1/M2 chip) try this:
+- ✅ **Use LCM or LCM-LoRA mode** - these work great with MPS
+- ❌ **Do NOT use LCM-OpenVINO mode** - OpenVINO is not supported on Apple Silicon
+- 📦 First generation will download the model (~2-3GB) from HuggingFace
+- ⏱️ First inference may take 20-60 seconds (Metal compilation), subsequent ones are faster
 
-`export DEVICE=mps` and start app `start.sh`
+Thanks [Autantpourmoi](https://github.com/Autantpourmoi) for original Mac testing.
 
 #### Web UI screenshot
 
