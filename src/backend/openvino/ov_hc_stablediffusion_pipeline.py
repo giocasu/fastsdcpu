@@ -1,14 +1,23 @@
 """This is an experimental pipeline used to test AI PC NPU and GPU"""
 
+import platform
 from pathlib import Path
 
 from diffusers import EulerDiscreteScheduler,LCMScheduler
 from huggingface_hub import snapshot_download
 from PIL import Image
-from backend.openvino.stable_diffusion_engine import (
-    StableDiffusionEngineAdvanced,
-    LatentConsistencyEngineAdvanced
-)
+
+# Check if OpenVINO is available
+_is_mac_arm = platform.system() == "Darwin" and platform.machine() == "arm64"
+
+if not _is_mac_arm:
+    from backend.openvino.stable_diffusion_engine import (
+        StableDiffusionEngineAdvanced,
+        LatentConsistencyEngineAdvanced
+    )
+else:
+    StableDiffusionEngineAdvanced = None
+    LatentConsistencyEngineAdvanced = None
 
 
 class OvHcStableDiffusion:

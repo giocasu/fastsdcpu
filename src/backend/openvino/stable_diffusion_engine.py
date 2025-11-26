@@ -6,8 +6,18 @@ SPDX - License - Identifier: Apache - 2.0
 import inspect
 from typing import Union, Optional, Any, List, Dict
 import numpy as np
-# openvino
-from openvino.runtime import Core
+import platform
+
+# Check if OpenVINO is available (not on Mac ARM)
+_is_mac_arm = platform.system() == "Darwin" and platform.machine() == "arm64"
+Core = None
+
+if not _is_mac_arm:
+    try:
+        from openvino.runtime import Core
+    except ImportError:
+        Core = None
+
 # tokenizer
 from transformers import CLIPTokenizer
 import torch

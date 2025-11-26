@@ -5,7 +5,7 @@ import random
 
 import numpy as np
 import torch
-from backend.device import is_openvino_device
+from backend.device import is_openvino_device, is_openvino_available
 from backend.lora import reset_active_lora_weights
 from backend.controlnet import (
     load_controlnet_adapters,
@@ -17,12 +17,28 @@ from backend.models.lcmdiffusion_setting import (
     LCMDiffusionSetting,
     LCMLora,
 )
-from backend.openvino.pipelines import (
-    get_ov_image_to_image_pipeline,
-    get_ov_text_to_image_pipeline,
-    ov_load_tiny_autoencoder,
-    get_ov_diffusion_pipeline,
-)
+
+# Conditionally import OpenVINO modules
+if is_openvino_available():
+    from backend.openvino.pipelines import (
+        get_ov_image_to_image_pipeline,
+        get_ov_text_to_image_pipeline,
+        ov_load_tiny_autoencoder,
+        get_ov_diffusion_pipeline,
+    )
+    from backend.openvino.ov_hc_stablediffusion_pipeline import OvHcLatentConsistency
+else:
+    # Provide dummy functions that raise errors if called
+    def get_ov_image_to_image_pipeline(*args, **kwargs):
+        raise RuntimeError("OpenVINO is not available on this platform")
+    def get_ov_text_to_image_pipeline(*args, **kwargs):
+        raise RuntimeError("OpenVINO is not available on this platform")
+    def ov_load_tiny_autoencoder(*args, **kwargs):
+        raise RuntimeError("OpenVINO is not available on this platform")
+    def get_ov_diffusion_pipeline(*args, **kwargs):
+        raise RuntimeError("OpenVINO is not available on this platform")
+    OvHcLatentConsistency = None
+
 from backend.pipelines.lcm import (
     get_image_to_image_pipeline,
     get_lcm_model_pipeline,
@@ -32,7 +48,6 @@ from backend.pipelines.lcm_lora import get_lcm_lora_pipeline
 from constants import DEVICE, GGUF_THREADS
 from diffusers import LCMScheduler
 from image_ops import resize_pil_image
-from backend.openvino.ov_hc_stablediffusion_pipeline import OvHcLatentConsistency
 from backend.gguf.gguf_diffusion import (
     GGUFDiffusion,
     ModelConfig,
@@ -517,8 +532,10 @@ class LCMTextToImage:
                 torch.manual_seed(seeds[0])
                 lcm_diffusion_setting.seed = seeds[0]
         else:
+            # MPS doesn't support generators directly, use CPU generator instead
+            generator_device = "cpu" if self.device == "mps" else self.device
             pipeline_extra_args["generator"] = [
-                torch.Generator(device=self.device).manual_seed(s) for s in seeds
+                torch.Generator(device=generator_device).manual_seed(s) for s in seeds
             ]
 
         is_openvino_pipe = lcm_diffusion_setting.use_openvino and is_openvino_device()
